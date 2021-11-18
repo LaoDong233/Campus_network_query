@@ -75,6 +75,14 @@ class Link:
                 num = 0
         return online_user
 
+    def get_online_page(self):
+        sion = requests.session()
+        sion.post("http://172.30.0.2:8080/selfservice/module/scgroup/web/login_judge.jsf",
+                         headers=self.header, data=self.data)
+        page = sion.get("http://172.30.0.2:8080/selfservice/module/webcontent/web/onlinedevice_list.jsf",
+                        headers=self.header)
+        return page
+
     def any_online(self):
         page = self.get_online_page()
         if not page:
