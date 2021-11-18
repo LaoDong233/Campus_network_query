@@ -1,5 +1,5 @@
 from link import Link
-
+from login import Login
 
 if __name__ == '__main__':
     while 1:
@@ -16,5 +16,18 @@ if __name__ == '__main__':
             print("密码错误")
         elif not online_num:
             print("没人在线")
+            while 1:
+                try:
+                    choice = input("是否要登录（y,n）：")
+                    if choice not in ['y', 'n']:
+                        raise RuntimeError
+                except RuntimeError:
+                    print("输入错误")
+                    continue
+                else:
+                    if choice == 'y':
+                        user = Login(username, password)
+                        user.login()
+                    exit()
         else:
             print("有%s个用户在登录%s" % (online_num, username))
