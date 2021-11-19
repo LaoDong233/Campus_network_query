@@ -16,8 +16,9 @@ if __name__ == '__main__':
             print("密码错误")
         elif not online_num:
             print("没人在线")
+            # 这个选项是是否启用确认登录，如果为FALSE就会不请求是否登录直接进行登录
             # noinspection PyUnreachableCode
-            if False:
+            if True:
                 while 1:
                     try:
                         choice = input("是否要登录（y,n）：")

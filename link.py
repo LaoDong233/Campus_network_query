@@ -15,31 +15,8 @@ class Link:
 
     @staticmethod
     def is_error_psd(page):
-        num = 0
-        for a in page.text:
-            if a == '用':
-                num += 1
-            elif a == '户' and num == 1:
-                num += 1
-            elif a != '户' and num == 1:
-                num = 0
-            elif a == '不' and num == 2:
-                num += 1
-            elif a != '不' and num == 2:
-                num = 0
-            elif a == '存' and num == 3:
-                num += 1
-            elif a != '存' and num == 3:
-                num = 0
-            elif a == '在' and num == 4:
-                num += 1
-            elif a != '在' and num == 4:
-                num = 0
-            elif a == '或' and num == 5:
-                num += 1
-                return True
-            elif a != '或' and num == 5:
-                num = 0
+        if page.text.find("用户不存在或") != -1:
+            return True
 
     def get_online_page_error(self):
         sion = requests.session()
@@ -55,24 +32,7 @@ class Link:
         page = self.get_online_page_error()
         if not page:
             return -1
-        num = 0
-        online_user = 0
-        for a in page.text:
-            if a == '上':
-                num += 1
-            elif a == '线' and num == 1:
-                num += 1
-            elif a != '线' and num == 1:
-                num = 0
-            elif a == '时' and num == 2:
-                num += 1
-            elif a != '时' and num == 2:
-                num = 0
-            elif a == '间' and num == 3:
-                num += 1
-                online_user += 1
-            elif a != '间' and num == 3:
-                num = 0
+        online_user = page.text.count("上线时间")
         return online_user
 
     def get_online_page(self):
@@ -87,22 +47,5 @@ class Link:
         page = self.get_online_page()
         if not page:
             return -1
-        num = 0
-        online_user = 0
-        for a in page.text:
-            if a == '上':
-                num += 1
-            elif a == '线' and num == 1:
-                num += 1
-            elif a != '线' and num == 1:
-                num = 0
-            elif a == '时' and num == 2:
-                num += 1
-            elif a != '时' and num == 2:
-                num = 0
-            elif a == '间' and num == 3:
-                num += 1
-                online_user += 1
-            elif a != '间' and num == 3:
-                num = 0
+        online_user = page.text.count("上线时间")
         return online_user
