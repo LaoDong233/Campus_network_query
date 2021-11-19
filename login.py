@@ -136,6 +136,8 @@ class Login:
         repack = response_res.json()
         if repack["message"] != "":
             print(repack["message"])
+            if repack["message"].count("您的账户已欠费"):
+                return True
         else:
             if repack["result"] == "success":
                 print("理论上登录成功了")
@@ -148,7 +150,9 @@ class Login:
         self.check_service()
         if self.is_valid():
             self.get_valid_code()
-        self.login_pack()
+        if self.login_pack():
+            print("登录失败")
+            return True
 
 
 if __name__ == '__main__':
