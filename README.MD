@@ -13,9 +13,12 @@
 ## 使用方法
 1. 克隆本库
 2. 使用pip install -r requirements.txt安装前置
-3. 安装tesseract
+3. 安装tesseract或cnocr[理论会自动安装]
 4. ~~导入训练好的验证码模型~~暂时未做模型训练
 5. 运行main.py
-##已知bug
-5. tesseract文本识别率基本为0
-6. 不会识别无法ping通登录网关的情况
+## 注意事项
+1. tesseract和cnocr的切换参数在login.py
+2. 详细见备注
+## 已知bug
+1. ~~tesseract文本识别率基本为0~~
+2. 不会识别无法ping通登录网关的情况

@@ -2,6 +2,7 @@ import requests.utils
 import requests.sessions
 from PIL import Image
 import pytesseract
+from cnocr import CnOcr
 
 
 class Login:
@@ -92,11 +93,22 @@ class Login:
     def get_valid_code(self):
         while 1:
             self.get_valid()
-            img = Image.open('validcode.png')
-            text = pytesseract.image_to_string(img, lang='eng')
-            if not len(text) == 1:
-                self.validcode = text[:4]
-                print(text[:4])
+            # 两款ocr切换开关，False为使用cnocr，True使用tesseract ocr
+            # noinspection PyUnreachableCode
+            if False:
+                img = Image.open('validcode.png')
+                text = pytesseract.image_to_string(img, lang='eng')
+                if not len(text) == 1:
+                    self.validcode = text[:4]
+                    print(text[:4])
+                    break
+            else:
+                ocr = CnOcr()
+                img = "validcode.png"
+                res = ocr.ocr_for_single_line(img)
+                if len(res[0]) == 4:
+                    self.validcode = ''.join(res[0])
+                    break
 
     def login_pack(self):
         post_header = {
@@ -118,15 +130,17 @@ class Login:
             "operatorUserId": "",
             "validcode": self.validcode
         }
-        print(post_header["Cookie"])
+        print('使用Cookie: ' + post_header["Cookie"])
         response_res = requests.post(self.post_url, data=post_data, headers=post_header)
         response_res.encoding = "utf-8"
         repack = response_res.json()
-        print(response_res.text)
-        if repack["result"] == "success":
-            print("理论上登录成功了")
+        if repack["message"] != "":
+            print(repack["message"])
         else:
-            print("没有登录成功，但没有网络，没办法提醒")
+            if repack["result"] == "success":
+                print("理论上登录成功了")
+            else:
+                print("没有登录成功，但没有网络，没办法提醒")
 
     def login(self):
         self.get_send_cookie()
@@ -138,13 +152,5 @@ class Login:
 
 
 if __name__ == '__main__':
-    a = Login("20105010494", "1")
-    a.check_service()
-    a.get_send_cookie()
-    a.get_query_string()
-    a.login_pack()
-    a.login_pack()
-    a.login_pack()
-    a.login_pack()
-    if a.is_valid():
-        a.get_valid_code()
+    a = Login("20105010494", "170011")
+    a.login()
