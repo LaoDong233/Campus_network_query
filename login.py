@@ -153,8 +153,3 @@ class Login:
         if self.login_pack():
             print("登录失败")
             return True
-
-
-if __name__ == '__main__':
-    a = Login("20105010494", "170011")
-    a.login()
