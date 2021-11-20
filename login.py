@@ -30,14 +30,14 @@ class Login:
         session = requests.session()
         session.get(self.url1)
         requests.utils.dict_from_cookiejar(session.cookies)
-        self.send_cookie = session.cookies['JSESSIONID']
+        return session.cookies['JSESSIONID']
 
     def get_query_string(self):
         back = requests.get(self.url2)
         query_string = back.text
         st = query_string.find("index.jsp?") + 10
         end = query_string.find("'</script>")
-        self.query_string = query_string[st:end]
+        return query_string[st:end]
 
     def check_service(self):
         post_header = {
@@ -53,7 +53,7 @@ class Login:
                              headers=post_header, data=post_data)
         for name, ser in self.services_choice.items():
             if page.text.find(name):
-                self.services = ser
+                return ser
 
     def is_valid(self):
         post_header = {
@@ -145,9 +145,9 @@ class Login:
                 print("没有登录成功，但没有网络，没办法提醒")
 
     def login(self):
-        self.get_send_cookie()
-        self.get_query_string()
-        self.check_service()
+        self.send_cookie = self.get_send_cookie()
+        self.query_string = self.get_query_string()
+        self.query_string = self.check_service()
         if self.is_valid():
             self.get_valid_code()
         if self.login_pack():
