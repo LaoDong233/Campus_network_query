@@ -13,8 +13,8 @@ class Login:
         self.password = password
         self.services_choice = {
             "移动pppoe": "%E7%A7%BB%E5%8A%A8pppoe",
-            "电信专线": "%E8%81%94%E9%80%9A%E4%B8%93%E7%BA%BF",
-            "联通专线": "%E7%94%B5%E4%BF%A1%E4%B8%93%E7%BA%BF"
+            "联通专线": "%E8%81%94%E9%80%9A%E4%B8%93%E7%BA%BF",
+            "电信专线": "%E7%94%B5%E4%BF%A1%E4%B8%93%E7%BA%BF"
         }
         self.services = None
         self.url1 = "http://172.30.0.11/"
@@ -32,14 +32,14 @@ class Login:
         session = requests.session()
         session.get(self.url1)
         requests.utils.dict_from_cookiejar(session.cookies)
-        return session.cookies['JSESSIONID']
+        self.send_cookie = session.cookies['JSESSIONID']
 
     def get_query_string(self):
         back = requests.get(self.url2)
         query_string = back.text
         st = query_string.find("index.jsp?") + 10
         end = query_string.find("'</script>")
-        return query_string[st:end]
+        self.query_string = query_string[st:end]
 
     def check_service(self):
         post_header = {
@@ -54,8 +54,9 @@ class Login:
         page = requests.post("http://172.30.0.11/eportal/userV2.do?method=getServices",
                              headers=post_header, data=post_data)
         for name, ser in self.services_choice.items():
-            if page.text.find(name):
-                return ser
+            if page.text.count(name):
+                self.services= ser
+                print(ser)
 
     def is_valid(self):
         post_header = {
@@ -147,9 +148,9 @@ class Login:
                 tkinter.messagebox.showerror('错误', '登陆失败')
 
     def login(self):
-        self.send_cookie = self.get_send_cookie()
-        self.query_string = self.get_query_string()
-        self.query_string = self.check_service()
+        self.get_send_cookie()
+        self.get_query_string()
+        self.check_service()
         if self.is_valid():
             self.get_valid_code()
         if self.login_pack():
