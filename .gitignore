@@ -3,3 +3,4 @@ test*.*
 user*.*
 build
 dist
+/main.spec

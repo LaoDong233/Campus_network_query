@@ -3,6 +3,8 @@ import requests.sessions
 from PIL import Image
 import pytesseract
 from cnocr import CnOcr
+import tkinter
+import tkinter.messagebox
 
 
 class Login:
@@ -135,14 +137,14 @@ class Login:
         response_res.encoding = "utf-8"
         repack = response_res.json()
         if repack["message"] != "":
-            print(repack["message"])
+            tkinter.messagebox.showerror('错误', repack['message'])
             if repack["message"].count("您的账户已欠费"):
                 return True
         else:
             if repack["result"] == "success":
-                print("理论上登录成功了")
+                tkinter.messagebox.showinfo('提示', '理论登陆成功')
             else:
-                print("没有登录成功，但没有网络，没办法提醒")
+                tkinter.messagebox.showerror('错误', '登陆失败')
 
     def login(self):
         self.send_cookie = self.get_send_cookie()
@@ -151,5 +153,5 @@ class Login:
         if self.is_valid():
             self.get_valid_code()
         if self.login_pack():
-            print("登录失败")
+            tkinter.messagebox.showerror('错误', '登陆失败')
             return True
