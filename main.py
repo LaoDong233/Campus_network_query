@@ -1,5 +1,6 @@
 import socket
 import base64
+from link import Link
 # import time
 from login import Login
 from tkinter import *
@@ -54,6 +55,13 @@ class My_Gui:
             if password is None or username is None:
                 continue
             else:
+                online = Link(username, password)
+                online_num = online.any_online_error()
+                if online_num != -1:
+                    client.send("False".encode("utf-8"))
+                    continue
+                elif online_num == 0:
+                    client.send("True".encode("utf-8"))
                 client.close()
                 break
         school_network.logout()

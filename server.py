@@ -1,4 +1,4 @@
-from link import Link
+# from link import Link
 import base64
 import csv
 import threading
@@ -67,18 +67,18 @@ class Server(threading.Thread):
             # self.sock.send(base64.b64encode(password.encode("utf-8")))
             # self.sock.close()
             # break
-            online = Link(username, password)
-            online_num = online.any_online_error()
-            if online_num == -1:
-                print("%s 密码错误" % username)
-            elif not online_num:
-                print("将%s 分配给%s" % (username, self.address))
+            while 1:
+                print("尝试将%s 分配给%s" % (username, self.address))
                 self.sock.send(base64.b64encode(username.encode("utf-8")))
                 self.sock.send(base64.b64encode(password.encode("utf-8")))
-                self.sock.close()
-                break
-            elif online_num:
-                user_list.append(user)
+                can_use = self.sock.recv(1024).decode('utf-8')
+                if can_use:
+                    print("成功将%s 分配给%s" % (username, self.address))
+                    is_dos.start()
+                else:
+                    user_list.append(username)
+                    continue
+            # self.sock.close(
         time.sleep(20)
         user_list.append(user)
         print("已释放%s" % str(self.address))
