@@ -1,44 +1,67 @@
-from link import Link
+import socket
+import base64
+# import time
 from login import Login
+from tkinter import *
+import tkinter.messagebox
 
 
-# 是否禁止静默登录
-not_silent_login = True
-while 1:
-    username = input("Username: ")
-    password = input("Password: ")
-    online = Link(username, password)
-    # 如果启用这个，那么程序就不会报密码错误，能增加效率
-    # noinspection PyUnreachableCode
-    if False:
-        online_num = online.any_online()
-    else:
-        online_num = online.any_online_error()
-    if online_num == -1:
-        print("密码错误")
-    elif not online_num:
-        print("没人在线")
-        # 这个选项是是否启用确认登录，如果为FALSE就会不请求是否登录直接进行登录
-        # noinspection PyUnreachableCode
-        if not_silent_login:
-            while 1:
-                try:
-                    choice = input("是否要登录（y,n）：")
-                    if choice not in ['y', 'n']:
-                        raise RuntimeError
-                except RuntimeError:
-                    print("输入错误")
-                    continue
-                else:
-                    if choice == 'y':
-                        user = Login(username, password)
-                        if user.login():
-                            break
-                    exit()
-        else:
-            user = Login(username, password)
-            if user.login():
+class My_Gui:
+    def __init__(self):
+        self.root = Tk()
+        self.root.title("校园网认证")
+        self.root.wm_attributes("-alpha", 1.0)
+        self.root.wm_attributes("-topmost", True)
+        self.password = StringVar()
+        self.username = StringVar()
+        self.main_window()
+
+    def main_window(self):
+        Label(self.root, text="用户名").grid(row=0, column=0)
+        Entry(self.root, textvariable=self.username).grid(row=1, column=0)
+        Label(self.root, text="密码").grid(row=0, column=1)
+        Entry(self.root, textvariable=self.password).grid(row=1, column=1)
+        Button(self.root, text='提交', command=self.login).grid(row=2)
+
+    def login(self):
+        self.username = self.username.get()
+        self.password = self.password.get()
+        while True:
+            # username = input("Username: ")
+            # password = input("Password: ")
+            # tkinter.messagebox.showinfo("提示", '登陆成功')
+            # break
+            school_network = Login(self.username, self.password)
+            if school_network.login_stu_pack():
+                tkinter.messagebox.showinfo("提示", '第一次登陆成功')
+                break
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        host = '127.0.0.1'
+        port = 12345
+        client.connect((host, port))
+        msg = "['" + self.username + "','" + self.password + "']"
+        client.send(msg.encode('utf-8'))
+        while 1:
+            num = 0
+            password = None
+            username = None
+            while num < 2:
+                if num == 0:
+                    username = base64.b64decode(client.recv(1024)).decode('utf-8')
+                elif num == 1:
+                    password = base64.b64decode(client.recv(1024)).decode('utf-8')
+                num += 1
+            if password is None or username is None:
                 continue
-            exit()
-    else:
-        print("有%s个用户在登录%s" % (online_num, username))
+            else:
+                client.close()
+                break
+        school_network.logout()
+        network = Login(username, password)
+        network.login()
+        tkinter.messagebox.showinfo("提示", '理论登陆成功')
+
+
+if __name__ == '__main__':
+    gui = My_Gui()
+    gui.root.mainloop()

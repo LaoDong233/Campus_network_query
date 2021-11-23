@@ -3,3 +3,5 @@ test*.*
 build
 dist
 users*.*
+main.spec
+stu_list.csv
