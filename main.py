@@ -57,12 +57,11 @@ class My_Gui:
             else:
                 online = Link(username, password)
                 online_num = online.any_online_error()
-                if online_num != -1:
+                if online_num != 0:
                     client.send("False".encode("utf-8"))
                     continue
                 elif online_num == 0:
                     client.send("True".encode("utf-8"))
-                client.close()
                 break
         school_network.logout()
         network = Login(username, password)

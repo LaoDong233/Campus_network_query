@@ -48,7 +48,6 @@ class Server(threading.Thread):
 
     def run(self):
         is_dos = Stu(self.sock, self.address[0])
-        is_dos.start()
         stu_usr = self.sock.recv(1024).decode('utf-8')
         print(stu_usr)
         try:
@@ -67,17 +66,18 @@ class Server(threading.Thread):
             # self.sock.send(base64.b64encode(password.encode("utf-8")))
             # self.sock.close()
             # break
-            while 1:
-                print("尝试将%s 分配给%s" % (username, self.address))
-                self.sock.send(base64.b64encode(username.encode("utf-8")))
-                self.sock.send(base64.b64encode(password.encode("utf-8")))
-                can_use = self.sock.recv(1024).decode('utf-8')
-                if can_use:
-                    print("成功将%s 分配给%s" % (username, self.address))
-                    is_dos.start()
-                else:
-                    user_list.append(username)
-                    continue
+            print("尝试将%s 分配给%s" % (username, self.address))
+            self.sock.send(base64.b64encode(username.encode("utf-8")))
+            self.sock.send(base64.b64encode(password.encode("utf-8")))
+            can_use = self.sock.recv(1024).decode('utf-8')
+            if eval(can_use):
+                print("成功将%s 分配给%s" % (username, self.address))
+                is_dos.start()
+                self.sock.close()
+                break
+            else:
+                user_list.append(username)
+                continue
             # self.sock.close(
         time.sleep(20)
         user_list.append(user)
