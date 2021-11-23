@@ -21,7 +21,7 @@ class My_Gui:
         Label(self.root, text="用户名").grid(row=0, column=0)
         Entry(self.root, textvariable=self.username).grid(row=1, column=0)
         Label(self.root, text="密码").grid(row=0, column=1)
-        Entry(self.root, textvariable=self.password).grid(row=1, column=1)
+        Entry(self.root, textvariable=self.password, show='*').grid(row=1, column=1)
         Button(self.root, text='提交', command=self.login).grid(row=2)
 
     def login(self):
@@ -67,6 +67,7 @@ class My_Gui:
         network = Login(username, password)
         network.login()
         tkinter.messagebox.showinfo("提示", '理论登陆成功')
+        self.root.destroy()
 
 
 if __name__ == '__main__':

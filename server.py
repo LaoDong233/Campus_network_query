@@ -76,7 +76,7 @@ class Server(threading.Thread):
                 self.sock.close()
                 break
             else:
-                user_list.append(username)
+                user_list.append(user)
                 continue
             # self.sock.close(
         time.sleep(20)
@@ -95,12 +95,15 @@ class Exit(threading.Thread):
             except ValueError:
                 pass
             else:
-                print(stu_user_list)
                 if a == -1:
                     with open("stu_list.csv", "w+", newline='', encoding='utf-8') as file:
                         stu_users = csv.writer(file)
                         for stu in stu_user_list:
                             stu_users.writerow(stu)
+                elif a == 1:
+                    print(stu_user_list)
+                elif a == 2:
+                    print(user_list)
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
