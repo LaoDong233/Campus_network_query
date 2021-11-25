@@ -49,11 +49,18 @@ class Server(threading.Thread):
     def run(self):
         is_dos = Stu(self.sock, self.address[0])
         stu_usr = self.sock.recv(1024).decode('utf-8')
-        print(stu_usr)
+        print("%s 正在请求登录" % stu_usr)
         try:
             stu_user_list.index(eval(stu_usr))
         except ValueError:
             stu_user_list.append(eval(stu_usr))
+        version = self.sock.recv(1024).decode('utf-8')
+        version = str(version)
+        if version == 'v1':
+            pass
+        else:
+            print("%s 正在使用过时的客户端" % self.address[0])
+            return -1
         user = None
         for user in user_list:
             if len(user) != 2:
@@ -106,9 +113,25 @@ class Exit(threading.Thread):
                     print(user_list)
 
 
+class AutoSave(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+
+    def run(self):
+        while 1:
+            with open("stu_list.csv", "w+", newline='', encoding='utf-8') as file:
+                stu_users = csv.writer(file)
+                for stu in stu_user_list:
+                    stu_users.writerow(stu)
+            print("自动保存成功")
+            time.sleep(1800)
+
+
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 ex = Exit()
+auto_save = AutoSave()
 ex.start()
+auto_save.start()
 host = ''
 port = 12345
 server.bind((host, port))

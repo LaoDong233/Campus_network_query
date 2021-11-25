@@ -1,10 +1,13 @@
 import socket
 import base64
 from link import Link
-# import time
+import time
 from login import Login
 from tkinter import *
 import tkinter.messagebox
+
+
+version = "v1"
 
 
 class My_Gui:
@@ -15,14 +18,17 @@ class My_Gui:
         self.root.wm_attributes("-topmost", True)
         self.password = StringVar()
         self.username = StringVar()
+        self.root.resizable(0, 0)
         self.main_window()
 
     def main_window(self):
+        global version
         Label(self.root, text="用户名").grid(row=0, column=0)
         Entry(self.root, textvariable=self.username).grid(row=1, column=0)
         Label(self.root, text="密码").grid(row=0, column=1)
         Entry(self.root, textvariable=self.password, show='*').grid(row=1, column=1)
         Button(self.root, text='提交', command=self.login).grid(row=2)
+        Label(self.root, text="版本号：" + version).grid(row=2, column=1)
 
     def login(self):
         self.username = self.username.get()
@@ -37,11 +43,15 @@ class My_Gui:
                 tkinter.messagebox.showinfo("提示", '第一次登陆成功')
                 break
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        global version
         host = '127.0.0.1'
         port = 12345
         client.connect((host, port))
         msg = "['" + self.username + "','" + self.password + "']"
+        time.sleep(0.2)
         client.send(msg.encode('utf-8'))
+        time.sleep(0.3)
+        client.send(version.encode('utf-8'))
         while 1:
             num = 0
             password = None
