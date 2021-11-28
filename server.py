@@ -9,7 +9,8 @@ import time
 stu_list = list()
 user_list = list()
 stu_user_list = list()
-with open("users.csv", "r", encoding="UTF-8") as f:
+server_version = ['v2', 'android_v1']
+with open("users_run.csv", "r", encoding="UTF-8") as f:
     users = csv.reader(f)
     for u in users:
         if len(u) != 2:
@@ -56,10 +57,12 @@ class Server(threading.Thread):
             stu_user_list.append(eval(stu_usr))
         version = self.sock.recv(1024).decode('utf-8')
         version = str(version)
-        if version == 'v1':
+        global server_version
+        if version in server_version:
             pass
         else:
             print("%s 正在使用过时的客户端" % self.address[0])
+            self.sock.close()
             return -1
         user = None
         for user in user_list:
@@ -75,6 +78,7 @@ class Server(threading.Thread):
             # break
             print("尝试将%s 分配给%s" % (username, self.address))
             self.sock.send(base64.b64encode(username.encode("utf-8")))
+            time.sleep(0.2)
             self.sock.send(base64.b64encode(password.encode("utf-8")))
             can_use = self.sock.recv(1024).decode('utf-8')
             if eval(can_use):
@@ -107,6 +111,10 @@ class Exit(threading.Thread):
                         stu_users = csv.writer(file)
                         for stu in stu_user_list:
                             stu_users.writerow(stu)
+                    with open("users_run.csv", "w+", newline='', encoding='utf-8') as file:
+                        tea_users = csv.writer(file)
+                        for tea in user_list:
+                            tea_users.writerow(tea)
                 elif a == 1:
                     print(stu_user_list)
                 elif a == 2:
@@ -123,6 +131,10 @@ class AutoSave(threading.Thread):
                 stu_users = csv.writer(file)
                 for stu in stu_user_list:
                     stu_users.writerow(stu)
+            with open("users_run.csv", "w+", newline='', encoding='utf-8') as file:
+                tea_users = csv.writer(file)
+                for tea in user_list:
+                    tea_users.writerow(tea)
             print("自动保存成功")
             time.sleep(1800)
 

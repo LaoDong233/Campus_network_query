@@ -57,6 +57,8 @@ class Login:
                 return ser
 
     def logout(self):
+        if self.send_cookie is None:
+            self.send_cookie = self.get_send_cookie()
         post_header = {
             "Host": "172.30.0.11",
             "Connection": "keep-alive",
@@ -213,6 +215,24 @@ class Login:
         self.services = self.check_service()
         if self.login_school_network():
             print("登录失败")
+            return False
+        else:
+            return True
+
+    def logout_test(self):
+        self.send_cookie = self.get_send_cookie()
+        post_header = {
+            "Host": "172.30.0.11",
+            "Connection": "keep-alive",
+            "Origin": "172.30.0.11",
+            'User-Agent': self.userAgent,
+            "Cookie": "JESSIONID="+self.send_cookie
+        }
+        page = requests.post("http://172.30.0.11/eportal/InterFace.do?method=logout",
+                             headers=post_header)
+        page.encoding = "UTF-8"
+        repack = page.json()
+        if repack["result"] != "success":
             return False
         else:
             return True

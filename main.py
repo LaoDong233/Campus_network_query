@@ -5,9 +5,13 @@ import time
 from login import Login
 from tkinter import *
 import tkinter.messagebox
+from subprocess import run as command
+import subprocess
 
 
-version = "v1"
+version = "v2"
+host = '127.0.0.1'
+port = 12345
 
 
 class My_Gui:
@@ -31,6 +35,9 @@ class My_Gui:
         Label(self.root, text="版本号：" + version).grid(row=2, column=1)
 
     def login(self):
+        global version, host, port
+        ping_ser = "ping " + host + " -n 1 > nul"
+        exit_code = command(ping_ser, shell=True).returncode
         self.username = self.username.get()
         self.password = self.password.get()
         while True:
@@ -39,13 +46,19 @@ class My_Gui:
             # tkinter.messagebox.showinfo("提示", '登陆成功')
             # break
             school_network = Login(self.username, self.password)
-            if school_network.login_stu_pack():
-                tkinter.messagebox.showinfo("提示", '第一次登陆成功')
-                break
+            if exit_code == 1:
+                if school_network.login_stu_pack():
+                    tkinter.messagebox.showinfo("提示", '第一次登陆成功')
+                    break
+            else:
+                if Link(self.username, self.password).any_online_error() == -1:
+                    tkinter.messagebox.showerror("错误", "密码错误")
+                    self.root.destroy()
+                    return -1
+                else:
+                    break
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        global version
-        host = '127.0.0.1'
-        port = 12345
+        client.settimeout(5)
         client.connect((host, port))
         msg = "['" + self.username + "','" + self.password + "']"
         time.sleep(0.2)
@@ -53,18 +66,21 @@ class My_Gui:
         time.sleep(0.3)
         client.send(version.encode('utf-8'))
         while 1:
-            num = 0
-            password = None
-            username = None
-            while num < 2:
-                if num == 0:
-                    username = base64.b64decode(client.recv(1024)).decode('utf-8')
-                elif num == 1:
-                    password = base64.b64decode(client.recv(1024)).decode('utf-8')
-                num += 1
+            try:
+                username = base64.b64decode(client.recv(1024)).decode('utf-8')
+            except ConnectionAbortedError:
+                tkinter.messagebox.showerror("主机断开连接", "连接服务器失败，请检查客户端版本")
+                self.root.destroy()
+                return -1
+            except TimeoutError:
+                tkinter.messagebox.showerror("连接超时", "请检查与校园网之间的畅通\n或检查客户端版本是否正确")
+                self.root.destroy()
+                return -1
+            password = base64.b64decode(client.recv(1024)).decode('utf-8')
             if password is None or username is None:
                 continue
             else:
+                time.sleep(0.2)
                 online = Link(username, password)
                 online_num = online.any_online_error()
                 if online_num != 0:
