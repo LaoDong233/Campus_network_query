@@ -9,7 +9,7 @@ import time
 stu_list = list()
 user_list = list()
 stu_user_list = list()
-server_version = ['v2', 'android_v1']
+server_version = ['v3', 'android_v1']
 with open("users_run.csv", "r", encoding="UTF-8") as f:
     users = csv.reader(f)
     for u in users:

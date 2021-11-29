@@ -6,11 +6,10 @@ from login import Login
 from tkinter import *
 import tkinter.messagebox
 from subprocess import run as command
-import subprocess
 
 
-version = "v2"
-host = '127.0.0.1'
+version = "v3"
+host = '::1'
 port = 12345
 
 
@@ -57,43 +56,44 @@ class My_Gui:
                     return -1
                 else:
                     break
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.settimeout(5)
-        client.connect((host, port))
-        msg = "['" + self.username + "','" + self.password + "']"
-        time.sleep(0.2)
-        client.send(msg.encode('utf-8'))
-        time.sleep(0.3)
-        client.send(version.encode('utf-8'))
-        while 1:
-            try:
-                username = base64.b64decode(client.recv(1024)).decode('utf-8')
-            except ConnectionAbortedError:
-                tkinter.messagebox.showerror("主机断开连接", "连接服务器失败，请检查客户端版本")
-                self.root.destroy()
-                return -1
-            except TimeoutError:
-                tkinter.messagebox.showerror("连接超时", "请检查与校园网之间的畅通\n或检查客户端版本是否正确")
-                self.root.destroy()
-                return -1
-            password = base64.b64decode(client.recv(1024)).decode('utf-8')
-            if password is None or username is None:
-                continue
-            else:
-                time.sleep(0.2)
-                online = Link(username, password)
-                online_num = online.any_online_error()
-                if online_num != 0:
-                    client.send("False".encode("utf-8"))
+        try:
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.settimeout(5)
+            client.connect((host, port))
+            msg = "['" + self.username + "','" + self.password + "']"
+            time.sleep(0.2)
+            client.send(msg.encode('utf-8'))
+            time.sleep(1)
+            client.send(version.encode('utf-8'))
+            while 1:
+                try:
+                    username = base64.b64decode(client.recv(1024)).decode('utf-8')
+                except TimeoutError:
+                    tkinter.messagebox.showerror("连接超时", "请检查与校园网之间的畅通\n或检查客户端版本是否正确")
+                    self.root.destroy()
+                    return -1
+                password = base64.b64decode(client.recv(1024)).decode('utf-8')
+                if password is None or username is None:
                     continue
-                elif online_num == 0:
-                    client.send("True".encode("utf-8"))
-                break
-        school_network.logout()
-        network = Login(username, password)
-        network.login()
-        tkinter.messagebox.showinfo("提示", '理论登陆成功')
-        self.root.destroy()
+                else:
+                    time.sleep(0.2)
+                    online = Link(username, password)
+                    online_num = online.any_online_error()
+                    if online_num != 0:
+                        client.send("False".encode("utf-8"))
+                        continue
+                    elif online_num == 0:
+                        client.send("True".encode("utf-8"))
+                    break
+            school_network.logout()
+            network = Login(username, password)
+            network.login()
+            tkinter.messagebox.showinfo("提示", '理论登陆成功')
+            self.root.destroy()
+        except ConnectionAbortedError:
+            tkinter.messagebox.showerror("主机断开连接", "连接服务器失败，请检查客户端版本")
+            self.root.destroy()
+            return -1
 
 
 if __name__ == '__main__':
