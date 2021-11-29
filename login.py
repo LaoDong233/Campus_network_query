@@ -11,8 +11,8 @@ class Login:
         self.password = password
         self.services_choice = {
             "移动pppoe": "%E7%A7%BB%E5%8A%A8pppoe",
-            "电信专线": "%E8%81%94%E9%80%9A%E4%B8%93%E7%BA%BF",
-            "联通专线": "%E7%94%B5%E4%BF%A1%E4%B8%93%E7%BA%BF"
+            "联通专线": "%E8%81%94%E9%80%9A%E4%B8%93%E7%BA%BF",
+            "电信专线": "%E7%94%B5%E4%BF%A1%E4%B8%93%E7%BA%BF"
         }
         self.services = None
         self.url1 = "http://172.30.0.11/"
