@@ -11,7 +11,7 @@ stu_list = list()
 users_drivers = list()
 stu_user_list = list()
 user_list = list()
-server_version = ['vs1.1.0', 'android_v2']
+server_version = ['vs1.1.1', 'android_v2']
 
 
 def load():
@@ -172,16 +172,18 @@ class Server(threading.Thread):
                 self.sock.send(base64.b64encode("-1".encode('utf-8')))
                 return 0
             print("尝试将%s 分配给%s" % (username, self.address))
-            user = base64.b64encode(username.encode("utf-8")) + "$&^".encode("utf-8") + base64.b64encode(password.encode("utf-8"))
+            user = base64.b64encode(username.encode("utf-8")) + "$&^".encode("utf-8")\
+                + base64.b64encode(password.encode("utf-8"))
             self.sock.send(user)
             can_use = self.sock.recv(1024).decode('utf-8')
             if eval(can_use):
                 print("成功将%s 分配给%s" % (username, self.address))
                 is_dos.start()
                 self.sock.close()
+                user = [str(username), str(password)]
                 break
             else:
-                user_list.append(user)
+                user_list.append([str(username), str(password)])
                 continue
             # self.sock.close(
         time.sleep(20)

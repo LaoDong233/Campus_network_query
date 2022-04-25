@@ -2,3 +2,5 @@ requests==2.26.0
 
 future~=0.18.2
 WMI~=1.5.1
+PyMySQL~=1.0.2
+pypushdeer~=0.0.3

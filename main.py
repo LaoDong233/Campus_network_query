@@ -11,8 +11,8 @@ import wmi
 from link import Link
 from login import Login
 
-version = "vs1.1.0"
-host = '127.0.0.1'
+version = "vs1.1.1"
+host = '172.16.28.174'
 port = 12345
 save_username = ""
 save_password = ""
@@ -41,7 +41,7 @@ class My_Gui:
         self.root.wm_attributes("-topmost", True)
         self.password = StringVar()
         self.username = StringVar()
-        self.root.resizable(0, 0)
+        self.root.resizable(False, False)
         self.main_window()
         self.system = wmi.WMI()
 
@@ -94,6 +94,10 @@ class My_Gui:
                 if school_network.login_stu_pack():
                     tkinter.messagebox.showinfo("提示", '第一次登陆成功')
                     break
+                else:
+                    tkinter.messagebox.showerror("警告", '密码错误')
+                    self.root.destroy()
+                    return -1
             else:
                 if Link(self.username, self.password).any_online_error() == -1:
                     tkinter.messagebox.showerror("错误", "密码错误")

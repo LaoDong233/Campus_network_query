@@ -10,7 +10,6 @@ class Link:
         self.header = {
             "User-Agent": "Mozilla/5.0 (Linux; Android 7.1.2; PCRT00 Build/N2G48H; wv) AppleWebKit/537.36 "
                           "(KHTML, like Gecko) Version/4.0 Chrome/68.0.3440.70 Mobile Safari/537.36",
-            "X-Requested-With": "com.android.browser"
         }
 
     @staticmethod
