@@ -1,5 +1,7 @@
 # from link import Link
 import base64
+from typing import Union
+
 import pymysql
 import threading
 import socket
@@ -246,7 +248,7 @@ class Server(threading.Thread):
             return False
 
     # 验证码模块
-    def verification_code(self) -> bool:
+    def verification_code(self) -> Union[bool, int]:
         """
         从外部获取一个PushDeer的key并传入，在内部进行存储并且进行发包
         :return: TRUE成功，FALSE失败
@@ -310,7 +312,7 @@ class Server(threading.Thread):
         self.sock.settimeout(120)
         try:
             recode = self.sock.recv(1024).decode('utf-8')
-        except TimeoutError:
+        except socket.timeout:
             self.sock.close()
             return False
         if not recode == ver:
@@ -433,8 +435,9 @@ class Server(threading.Thread):
             # user_cpu_id = str(user_cpu_id)
             # UserLog(stu_usr[0], user_cpu_id).start()
             # 新用户安全算法，调用API发送验证码，存储API作为校验，每天验证一次
-            if self.verification_code() is False:
-                raise UserIsBanned("该用户%s已被封禁" % self.username)
+            ver_con = self.verification_code()
+            if ver_con is False:
+                raise TimeoutError("%s验证码错误" % self.username)
             while True:
                 # print("将%s 分配给%s" % (username, self.address))
                 # self.sock.send(base64.b64encode(username.encode("utf-8")))
