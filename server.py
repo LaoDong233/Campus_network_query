@@ -1,5 +1,6 @@
 # from link import Link
 import base64
+# import sys
 from typing import Union
 
 import pymysql
@@ -145,10 +146,13 @@ class Server(threading.Thread):
     # 简单的时间判断模块，传入一个旧的时间戳，传出是否和当前时间相差24小时
     @staticmethod
     def time_differ_day(org_time: int) -> bool:
-        if int(time.time()) - int(org_time) >= 86400:
+        try:
+            if int(time.time()) - int(org_time) >= 86400:
+                return True
+            else:
+                return False
+        except TypeError:
             return True
-        else:
-            return False
 
     # 网络监测模块，用于记录用户登录时使用的IP地址
     def ver_network(self) -> None:
@@ -297,6 +301,7 @@ class Server(threading.Thread):
                     PushDeer_id = %s where username = %s''',
                     (self.push_key, self.username)
                 )
+                conn.commit()
         # 未找到用户则在表内添加新用户
         else:
             security_cursor.execute(
@@ -306,6 +311,8 @@ class Server(threading.Thread):
                 (%s, %s)''',
                 (self.username, self.push_key)
             )
+            self.ver_network()
+            conn.commit()
         ver = self.generate_code(6)
         self.sock.send(base64.b64encode("-200".encode('utf-8')))
         self.send_verification_code(ver)
@@ -326,6 +333,7 @@ class Server(threading.Thread):
                 where username = %s''',
                 (int(time.time()), self.username)
             )
+            conn.commit()
         self.ver_network()
         self.check_verification_banned()
         conn.commit()
@@ -393,7 +401,6 @@ class Server(threading.Thread):
             where username = %s''', user['username']
         )
 
-    # noinspection PyTypeChecker
     def run(self) -> int:
         # 引用防御机制，老版本机制，已弃用
         # is_dos = Stu(self.sock, self.address[0])
@@ -482,11 +489,41 @@ class Server(threading.Thread):
             self.sock.close()
             return 0
         except TimeoutError:
-            print('%s客户端主动关闭连接' % self.address)
+            print('%s客户端主动关闭连接' % self.username)
             return 0
+        except ValueError:
+            print("%s未填写push秘钥" % self.username)
+
+
+class SqlSave(threading.Thread):
+    def __init__(self):
+        self.conn = conn
+        threading.Thread.__init__(self)
+
+    def run(self):
+        while 1:
+            try:
+                a = input(": ")
+                if a == '':
+                    continue
+            except ValueError:
+                pass
+            else:
+                if a == "help":
+                    print("说明："
+                          "\n1：提交事务"
+                          "\n2：放弃事务")
+                elif a == "1":
+                    conn.ping(reconnect=True)
+                    conn.commit()
+                elif a == "2":
+                    conn.ping(reconnect=True)
+                    conn.rollback()
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sql_saver = SqlSave()
+sql_saver.start()
 host = config['host']
 port = config['port']
 server.bind((host, port))
