@@ -74,6 +74,36 @@ class Server(threading.Thread):
         self.push_key = None
         self.password = None
 
+    # 饿死人攻击风控模块
+    # 从下面的模块中分离出来
+    # 方便阅读和修改
+    def ant_hung(self) -> bool:
+        """
+        饿死人攻击防范模块
+        两分钟内登录三次后执行封号
+        :return: 如果触发风控返回True，否则返回False
+        """
+        global ant_hung
+        for i in ant_hung:
+            if self.username in i:
+                ant = i
+                ant_hung.remove(i)
+                break
+        else:
+            ant = [self.username, int(time.time()), 0]
+        # 获取次数是否超过三次，如果超过触发风控封禁用户
+        if ant[1] - int(time.time()) <= 120 and ant[2] >= 3:
+            if self.not_ban is False:
+                self.ban_this_user()
+                return True
+        elif ant[1] - int(time.time()) <= 120:
+            ant[2] += 1
+        else:
+            ant[2] = 0
+            ant[1] = int(time.time())
+        ant_hung.append(ant)
+        return False
+
     # 获取验证码
     def send_verification_code(self, ver_code: str) -> None:
         print(ver_code)
@@ -252,16 +282,19 @@ class Server(threading.Thread):
             return False
 
     # 验证码模块
+
     def verification_code(self) -> Union[bool, int]:
         """
         从外部获取一个PushDeer的key并传入，在内部进行存储并且进行发包
         :return: TRUE成功，FALSE失败
         """
+        conn.ping(reconnect=True)
+        """
+        弃用，重写新方法
         # 防范饿死人攻击
         # 饿死人攻击：疯狂给服务器发送请求包来获取大量的用户数据
         # 数据模板：ant = [self.username, int(time.time()), 0]
         # 从饿死人攻击列表中寻找用户，如果这个用户存在，那么把用户取出并删除，否则创建新用户
-        conn.ping(reconnect=True)
         for i in ant_hung:
             if self.username in i:
                 ant = i
@@ -280,6 +313,10 @@ class Server(threading.Thread):
             ant[2] = 0
             ant[1] = int(time.time())
         ant_hung.append(ant)
+        """
+        # 新地防饿死人攻击方法
+        if self.ant_hung():
+            return False
         # 将获取来的key存入类全局方便调用
         # 寻找用户，并对比用户的key是否相同
         if security_cursor.execute(
@@ -298,9 +335,11 @@ class Server(threading.Thread):
                 security_cursor.execute(
                     '''update user_security 
                     set changes_times = changes_times + 1 ,
-                    PushDeer_id = %s where username = %s''',
+                    PushDeer_id = %s,
+                    times = 0 where username = %s''',
                     (self.push_key, self.username)
                 )
+                print(f'{self.username}已变更key')
                 conn.commit()
         # 未找到用户则在表内添加新用户
         else:
