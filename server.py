@@ -92,6 +92,7 @@ class Server(threading.Thread):
         else:
             ant = [self.username, int(time.time()), 0]
         # 获取次数是否超过三次，如果超过触发风控封禁用户
+        print(f'{self.username}登陆了{ant[2]}次，{time.strftime("%Y年%m月%d日%H时%M分%S秒")}')
         if ant[1] - int(time.time()) <= 120 and ant[2] >= 3:
             if self.not_ban is False:
                 self.ban_this_user()
@@ -106,7 +107,7 @@ class Server(threading.Thread):
 
     # 获取验证码
     def send_verification_code(self, ver_code: str) -> None:
-        print(ver_code)
+        print(f'{self.username}的验证码是{ver_code}')
         push_deer = PushDeer(pushkey=self.push_key)
         push_deer.send_text("Fuck School Network验证码 (试运行)", desp=f"您的验证码为{ver_code}")
 
@@ -158,7 +159,7 @@ class Server(threading.Thread):
                  (%s, %s)''',
                 (self.username, self.password)
             )
-        print(self.check_user_is_banned())
+        print(f'{self.username}封禁状态为{self.check_user_is_banned()}')
         # 判断该用户是否被封禁，如果被封禁返回FALSE
         if self.check_user_is_banned():
             conn.commit()
@@ -281,8 +282,7 @@ class Server(threading.Thread):
         except TypeError:
             return False
 
-    # 验证码模块
-
+    # 验证码验证模块
     def verification_code(self) -> Union[bool, int]:
         """
         从外部获取一个PushDeer的key并传入，在内部进行存储并且进行发包
