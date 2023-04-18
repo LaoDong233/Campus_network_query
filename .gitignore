@@ -1,5 +1,15 @@
 validcode.png
-test*.*
+*test*
 build
 dist
 users*.*
+main.spec
+stu_list.csv
+logo.ico
+校园网认证程序.spec
+whitelist.csv
+blacklist.csv
+save.txt
+*_mysql.*
+/.idea/dataSources/c060ed0b-d6ee-4a79-bfc0-1fd3cb84332e.xml
+/.idea/dataSources/c060ed0b-d6ee-4a79-bfc0-1fd3cb84332e/storage_v2/_src_/schema/information_schema.FNRwLQ.meta

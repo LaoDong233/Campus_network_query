@@ -193,7 +193,9 @@ class My_Gui:
         if first_open:
             tkinter.messagebox.showinfo("完结感言", closing_remarks)
             with open("readme.txt", "w", encoding="utf-8") as f:
-                f.write(closing_remarks + "\n\nQQ群号：511358840\n点击链接加入群聊【FSN】：https://jq.qq.com/?_wv=1027&k=Q6rNIq9F")
+                f.write(closing_remarks + "\n\n项目开源地址：https://github.com/LaoDong233/Campus_network_query"
+                                          "\nQQ群号：511358840"
+                                          "\n点击链接加入群聊【FSN】：https://jq.qq.com/?_wv=1027&k=Q6rNIq9F")
             first_open = False
 
     # @staticmethod
