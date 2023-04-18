@@ -1,10 +1,12 @@
 {
   "host": "",
-  "port": 12345,
+  "port": 7788,
   "mysql_host": "localhost",
   "mysql_port": 3306,
   "mysql_username": "school_network",
-  "mysql_password": "qaz123..",
+  "mysql_password": "",
   "mysql_database": "school_network",
-  "server_versions": "nv 1.0.0$%^example"
+  "server_versions": "Release 1.0.0",
+  "server_android_version": "Android_Beta 2.0.0",
+  "authorization_code": ""
 }

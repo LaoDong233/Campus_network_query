@@ -11,7 +11,7 @@
  Target Server Version : 80012
  File Encoding         : 65001
 
- Date: 25/04/2022 09:10:10
+ Date: 18/04/2023 09:45:02
 */
 
 SET NAMES utf8mb4;
@@ -33,6 +33,24 @@ CREATE TABLE `teacher_info`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 292 CHARACTER SET = utf8 COLLATE = utf8_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Table structure for user_android_security
+-- ----------------------------
+DROP TABLE IF EXISTS `user_android_security`;
+CREATE TABLE `user_android_security`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `authorization_code` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL,
+  `ban` int(2) NOT NULL DEFAULT 0,
+  `address` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL,
+  `address_number` int(11) NOT NULL DEFAULT 0,
+  `times` int(11) NULL DEFAULT 0,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `username`(`username`) USING BTREE,
+  UNIQUE INDEX `user_security_android_id_index`(`id`) USING BTREE,
+  CONSTRAINT `user_security_anroid_ibfk_1` FOREIGN KEY (`username`) REFERENCES `user_info` (`username`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
 -- Table structure for user_info
 -- ----------------------------
 DROP TABLE IF EXISTS `user_info`;
@@ -47,7 +65,7 @@ CREATE TABLE `user_info`  (
   INDEX `user`(`last_use`) USING BTREE,
   INDEX `username`(`username`) USING BTREE,
   CONSTRAINT `user` FOREIGN KEY (`last_use`) REFERENCES `teacher_info` (`username`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8 COLLATE = utf8_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 39 CHARACTER SET = utf8 COLLATE = utf8_unicode_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for user_security
@@ -56,16 +74,17 @@ DROP TABLE IF EXISTS `user_security`;
 CREATE TABLE `user_security`  (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `PushDeer_id` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `changes_times` int(11) NOT NULL DEFAULT 0,
+  `PushDeer_id` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL,
+  `changes_times` int(11) NULL DEFAULT 0,
   `ban` int(2) NOT NULL DEFAULT 0,
   `address` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL,
   `address_number` int(11) NOT NULL DEFAULT 0,
-  `times` int(11) NULL DEFAULT NULL,
+  `times` int(11) NULL DEFAULT 0,
+  `user_uuid` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `username`(`username`) USING BTREE,
   UNIQUE INDEX `user_security_id_uindex`(`id`) USING BTREE,
   CONSTRAINT `user_security_ibfk_1` FOREIGN KEY (`username`) REFERENCES `user_info` (`username`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8 COLLATE = utf8_unicode_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 40 CHARACTER SET = utf8 COLLATE = utf8_unicode_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -1,16 +1,20 @@
 # from link import Link
 import base64
 # import sys
+import os
 from typing import Union
 
 import pymysql
 import threading
 import socket
 import time
+import apprise
 import json
 import random
 import string
-from pypushdeer import PushDeer
+
+# pushdeer连接不上，暂时更改推送方式为钉钉
+# from pypushdeer import PushDeer
 
 """
 并没有写完,数据库结构还可能更改
@@ -27,13 +31,17 @@ conn = pymysql.connect(
     password=config['mysql_password'],
     database=config['mysql_database']
 )
+authorization_code = list(config["authorization_code"].split(","))
 teacher_cursor = conn.cursor(pymysql.cursors.DictCursor)
 teacher_cursor.execute('''select * from teacher_info''')
 user_cursor = conn.cursor()
 teacher_change_cursor = conn.cursor()
 security_cursor = conn.cursor()
+security_android_cursor = conn.cursor()
 server_version = config["server_versions"].split("$%^")
+server_android_version = config["server_android_version"].split("$%^")
 ant_hung = list()
+first_time = time.strftime("%Y-%m-%d-%H:%M:%S秒")
 
 """
 防止他人攻击获取教师账号
@@ -67,6 +75,7 @@ class Server(threading.Thread):
     def __init__(self, socked, add) -> None:
         # 内部变量主动初始化
         threading.Thread.__init__(self)
+        self.user_uuid = None
         self.sock = socked
         self.not_ban = False
         self.address = add
@@ -93,11 +102,11 @@ class Server(threading.Thread):
             ant = [self.username, int(time.time()), 0]
         # 获取次数是否超过三次，如果超过触发风控封禁用户
         print(f'{self.username}登陆了{ant[2]}次，{time.strftime("%Y年%m月%d日%H时%M分%S秒")}')
-        if ant[1] - int(time.time()) <= 120 and ant[2] >= 3:
+        if int(time.time()) - ant[1] <= 120 and ant[2] >= 3:
             if self.not_ban is False:
                 self.ban_this_user()
                 return True
-        elif ant[1] - int(time.time()) <= 120:
+        elif int(time.time()) - ant[1] <= 120:
             ant[2] += 1
         else:
             ant[2] = 0
@@ -108,8 +117,11 @@ class Server(threading.Thread):
     # 获取验证码
     def send_verification_code(self, ver_code: str) -> None:
         print(f'{self.username}的验证码是{ver_code}')
-        push_deer = PushDeer(pushkey=self.push_key)
-        push_deer.send_text("Fuck School Network验证码 (试运行)", desp=f"您的验证码为{ver_code}")
+        print(self.push_key)
+        pusher = apprise.Apprise()
+        pusher.add(f"dingtalk://{self.push_key}")
+        pusher.notify(title="Fuck School Network验证码 (试运行)",
+                      body=f"{self.username}的验证码为{ver_code}")
 
     # 验证码生成器
     @staticmethod
@@ -282,8 +294,61 @@ class Server(threading.Thread):
         except TypeError:
             return False
 
+    def verification_android(self) -> bool:
+        conn.ping(reconnect=True)
+        global security_android_cursor
+        if security_android_cursor.execute(
+                '''select authorization_code from user_android_security where username = %s''', self.username
+        ) == 1:
+            security_android_cursor.execute(
+                '''update user_android_security 
+                set authorization_code = %s,
+                times = 0 where username = %s''',
+                (self.push_key, self.username)
+            )
+            print(f"已更新安卓用户{self.username}的授权码")
+            conn.commit()
+        # 未找到用户则在表内添加新用户
+        else:
+            security_android_cursor.execute(
+                '''insert into 
+                user_android_security(username, authorization_code) 
+                VALUE 
+                (%s, %s)''',
+                (self.username, self.push_key)
+            )
+            self.ver_network()
+            conn.commit()
+        # 更新时间并允许登录
+        security_android_cursor.execute(
+            '''update user_android_security set times = %s where username = %s''',
+            (int(time.time()), self.username)
+        )
+        self.ver_network()
+        login = True
+        return login
+
+    def save_user_driver_id(self):
+        conn.ping(reconnect=True)
+        security_cursor.execute(
+            """select user_uuid from user_security where username = %s""", self.username)
+        user_uuid = security_cursor.fetchone()[0]
+        if user_uuid is None:
+            self.user_uuid = f"{self.user_uuid}$&^"
+        else:
+            for i in user_uuid.split("$&"):
+                if i == self.user_uuid:
+                    return None
+            else:
+                self.user_uuid = user_uuid + f"{self.user_uuid}$&^"
+        security_cursor.execute(
+            """update user_security set user_uuid = %s where username = %s""",
+            (self.user_uuid, self.username)
+        )
+        conn.commit()
+
     # 验证码验证模块
-    def verification_code(self) -> Union[bool, int]:
+    def verification_code(self, is_android) -> Union[bool, int]:
         """
         从外部获取一个PushDeer的key并传入，在内部进行存储并且进行发包
         :return: TRUE成功，FALSE失败
@@ -317,6 +382,9 @@ class Server(threading.Thread):
         # 新地防饿死人攻击方法
         if self.ant_hung():
             return False
+        # 根据传入的是否为安卓键入安卓核验方法
+        if is_android:
+            return self.verification_android()
         # 将获取来的key存入类全局方便调用
         # 寻找用户，并对比用户的key是否相同
         if security_cursor.execute(
@@ -352,7 +420,8 @@ class Server(threading.Thread):
             )
             self.ver_network()
             conn.commit()
-        ver = self.generate_code(6)
+        # 生成并发送验证码
+        ver = self.generate_code(6).upper()
         self.sock.send(base64.b64encode("-200".encode('utf-8')))
         self.send_verification_code(ver)
         self.sock.settimeout(120)
@@ -362,6 +431,7 @@ class Server(threading.Thread):
             self.sock.close()
             return False
         if not recode == ver:
+            print(recode)
             self.sock.send(base64.b64encode("-100".encode('utf-8')))
             login = False
         else:
@@ -457,6 +527,7 @@ class Server(threading.Thread):
             self.username = msg[0]
             self.password = msg[1]
             version = msg[2]
+            self.user_uuid = msg[3]
             self.push_key = msg[4]
             # 获取用户设备信息，暂时弃用，待重写
             # user_cpu_id = msg[3]
@@ -470,20 +541,24 @@ class Server(threading.Thread):
             # 如果需要大用户量可以在设置文件里的Server_Version中添加更多的版本
             # 版本号以$%^分割【我觉得在正常情况下出现这三个符号连用】
             version = str(version)
-            global server_version
+            global server_version, server_android_version
             if version in server_version:
-                pass
+                is_android = False
+            elif version in server_android_version:
+                is_android = True
             else:
                 print("%s 正在使用过时的客户端" % self.address[0])
+                self.sock.send(base64.b64encode("-10".encode("utf-8")))
                 self.sock.close()
                 return -1
             # 用户数据安全算法，原校验mac等信息，暂时弃用
             # user_cpu_id = str(user_cpu_id)
             # UserLog(stu_usr[0], user_cpu_id).start()
             # 新用户安全算法，调用API发送验证码，存储API作为校验，每天验证一次
-            ver_con = self.verification_code()
+            ver_con = self.verification_code(is_android)
             if ver_con is False:
                 raise TimeoutError("%s验证码错误" % self.username)
+            self.save_user_driver_id()
             while True:
                 # print("将%s 分配给%s" % (username, self.address))
                 # self.sock.send(base64.b64encode(username.encode("utf-8")))
@@ -540,6 +615,7 @@ class SqlSave(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
+        global ant_hung
         while 1:
             try:
                 a = input(": ")
@@ -549,15 +625,23 @@ class SqlSave(threading.Thread):
                 pass
             else:
                 if a == "help":
-                    print("说明："
-                          "\n1：提交事务"
-                          "\n2：放弃事务")
+                    print(
+                        "说明：\n"
+                        "1：提交事务\n"
+                        "2：放弃事务\n"
+                        "3: 打印临时列表\n"
+                        "e: 退出程序 os._exit(0)"
+                    )
                 elif a == "1":
                     conn.ping(reconnect=True)
                     conn.commit()
                 elif a == "2":
                     conn.ping(reconnect=True)
                     conn.rollback()
+                elif a == "3":
+                    print(ant_hung)
+                elif a == "e":
+                    os._exit(0)
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

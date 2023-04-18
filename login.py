@@ -16,7 +16,10 @@ class Login:
             "电信专线": "%E7%94%B5%E4%BF%A1%E4%B8%93%E7%BA%BF"
         }
         self.services = None
+        self.host = "dl.tsgzy.edu.cn:8443"
+        self.origin = "https://dl.tsgzy.edu.cn:8443"
         self.url1 = "http://172.30.0.11/"
+        self.test_url = "https://dl.tsgzy.edu.cn:8443/"
         self.url2 = "http://123.123.123.123/"
         self.send_cookie = None
         self.cookie = None
@@ -26,6 +29,7 @@ class Login:
         self.post_url = "http://172.30.0.11/eportal/InterFace.do?method=login"
         self.validcode = ""
         self.validcodeurl = ''
+        self.login_url = "https://dl.tsgzy.edu.cn:8443/eportal/InterFace.do?method=login"
 
     def get_send_cookie(self):
         session = requests.session()
@@ -33,16 +37,26 @@ class Login:
         requests.utils.dict_from_cookiejar(session.cookies)
         return session.cookies['JSESSIONID']
 
+    def get_urls(self):
+        back = requests.get(self.url2)
+        query_string = back.text
+        urls = query_string.find("ion.href='") + 10
+        end = query_string.find("'</script>")
+        return query_string[urls:end]
+
     def get_query_string(self):
         back = requests.get(self.url2)
         query_string = back.text
         st = query_string.find("index.jsp?") + 10
         end = query_string.find("'</script>")
-        return query_string[st:end]
+        query_string = query_string[st:end]
+        # query_string = query_string.replace("&", "%2526")
+        # query_string = query_string.replace("=", "%25")
+        return query_string
 
     def check_service(self):
         post_header = {
-            "Host": "172.30.0.11",
+            "Host": self.host,
             "Content-Length": "20",
             "User-Agent": self.userAgent,
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -50,7 +64,7 @@ class Login:
         post_data = {
             "username": self.username
         }
-        page = requests.post("http://172.30.0.11/eportal/userV2.do?method=getServices",
+        page = requests.post(f"{self.test_url}eportal/userV2.do?method=getServices",
                              headers=post_header, data=post_data)
         for name, ser in self.services_choice.items():
             if page.text == name:
@@ -60,13 +74,13 @@ class Login:
         if self.send_cookie is None:
             self.send_cookie = self.get_send_cookie()
         post_header = {
-            "Host": "172.30.0.11",
+            "Host": self.host,
             "Connection": "keep-alive",
-            "Origin": "172.30.0.11",
+            "Origin": self.origin,
             'User-Agent': self.userAgent,
             "Cookie": "JESSIONID="+self.send_cookie
         }
-        page = requests.post("http://172.30.0.11/eportal/InterFace.do?method=logout",
+        page = requests.post(f"{self.test_url}eportal/InterFace.do?method=logout",
                              headers=post_header)
         page.encoding = "UTF-8"
         repack = page.json()
@@ -77,9 +91,9 @@ class Login:
 
     def is_valid(self):
         post_header = {
-            "Host": "172.30.0.11",
+            "Host": self.host,
             "Connection": "keep-alive",
-            "Origin": "172.30.0.11",
+            "Origin": self.origin,
             'User-Agent': self.userAgent,
             "Cookie": "EPORTAL_COOKIE_USERNAME="+self.username+"; EPORTAL_COOKIE_PASSWORD="
                       + self.password+"; EPORTAL_COOKIE_SERVER="+self.services+"; EPORTAL_COOKIE_SERVER_NAME="
@@ -88,7 +102,7 @@ class Login:
         post_data = {
             "queryString": self.query_string
         }
-        page = requests.post("http://172.30.0.11/eportal/InterFace.do?method=pageInfo",
+        page = requests.post(f"{self.test_url}eportal/InterFace.do?method=pageInfo",
                              data=post_data, headers=post_header)
         if page.text.find('"validCodeUrl":""') == -1:
             st = page.text.find('"validCodeUrl":"') + 17
@@ -98,9 +112,9 @@ class Login:
 
     # def get_valid(self):
     #     get_header = {
-    #         "Host": "172.30.0.11",
+    #         "Host": self.host,
     #         "Connection": "keep-alive",
-    #         "Origin": "172.30.0.11",
+    #         "Origin": self.origin,
     #         'User-Agent': self.userAgent,
     #         "Cookie": "EPORTAL_COOKIE_USERNAME="+self.username+"; EPORTAL_COOKIE_PASSWORD="
     #                   + self.password+"; EPORTAL_COOKIE_SERVER="+self.services+"; EPORTAL_COOKIE_SERVER_NAME="
@@ -132,14 +146,16 @@ class Login:
 
     def login_pack(self):
         post_header = {
-            "Host": "172.30.0.11",
+            "Host": self.host,
             "Connection": "keep-alive",
             "Content-Length": "926",
-            "Origin": "172.30.0.11",
+            "Origin": self.origin,
             'User-Agent': self.userAgent,
-            "Cookie": "EPORTAL_COOKIE_USERNAME="+self.username+"; EPORTAL_COOKIE_PASSWORD="
-                      + self.password+"; EPORTAL_COOKIE_SERVER="+self.services+"; EPORTAL_COOKIE_SERVER_NAME="
-                      + self.services+" JESSIONID="+self.send_cookie+"; JSESSIONID="+self.send_cookie
+            # "Cookie": "EPORTAL_COOKIE_USERNAME="+self.username+"; EPORTAL_COOKIE_PASSWORD="
+            #           + self.password+"; EPORTAL_COOKIE_SERVER="+self.services+"; EPORTAL_COOKIE_SERVER_NAME="
+            #           + self.services+" JESSIONID="+self.send_cookie+"; JSESSIONID="+self.send_cookie
+
+            "Cookie": f"EPORTAL_COOKIE_USERNAME=; EPORTAL_COOKIE_PASSWORD=; EPORTAL_COOKIE_SERVER=; EPORTAL_COOKIE_SERVER_NAME=; JSESSIONID={self.send_cookie}"
         }
         post_data = {
             "userId": self.username,
@@ -148,10 +164,11 @@ class Login:
             "queryString": self.query_string,
             "operatorPwd": "",
             "operatorUserId": "",
-            "validcode": self.validcode
+            "validcode": self.validcode,
+            "passwordEncrypt": "false",
         }
         print('使用Cookie: ' + post_header["Cookie"])
-        response_res = requests.post(self.post_url, data=post_data, headers=post_header)
+        response_res = requests.post(self.login_url, data=post_data, headers=post_header)
         response_res.encoding = "utf-8"
         repack = response_res.json()
         if repack["message"] != "":
@@ -166,14 +183,15 @@ class Login:
 
     def login_school_network(self):
         post_header = {
-            "Host": "172.30.0.11",
+            "Host": self.host,
             "Connection": "keep-alive",
-            "Content-Length": "926",
-            "Origin": "172.30.0.11",
+            "Content-Length": "2048",
+            "Origin": self.origin,
             'User-Agent': self.userAgent,
-            "Cookie": "EPORTAL_COOKIE_USERNAME="+self.username+"; EPORTAL_COOKIE_PASSWORD="
-                      + self.password+"; EPORTAL_COOKIE_SERVER="+self.school_network+"; EPORTAL_COOKIE_SERVER_NAME="
-                      + self.school_network+" JESSIONID="+self.send_cookie+"; JSESSIONID="+self.send_cookie
+            # "Cookie": "EPORTAL_COOKIE_USERNAME="+self.username+"; EPORTAL_COOKIE_PASSWORD="
+            #           + self.password+"; EPORTAL_COOKIE_SERVER="+self.school_network+"; EPORTAL_COOKIE_SERVER_NAME="
+            #           + self.school_network+" JESSIONID="+self.send_cookie+"; JSESSIONID="+self.send_cookie
+            "Cookie": f"EPORTAL_COOKIE_USERNAME=; EPORTAL_COOKIE_PASSWORD=; EPORTAL_COOKIE_SERVER=; EPORTAL_COOKIE_SERVER_NAME=; JSESSIONID={self.send_cookie}"
         }
         post_data = {
             "userId": self.username,
@@ -182,10 +200,11 @@ class Login:
             "queryString": self.query_string,
             "operatorPwd": "",
             "operatorUserId": "",
-            "validcode": self.validcode
+            "validcode": self.validcode,
+            "passwordEncrypt": "false",
         }
         print('使用Cookie: ' + post_header["Cookie"])
-        response_res = requests.post(self.post_url, data=post_data, headers=post_header)
+        response_res = requests.post(self.login_url, data=post_data, headers=post_header)
         response_res.encoding = "utf-8"
         repack = response_res.json()
         if repack["message"] != "":
@@ -222,13 +241,13 @@ class Login:
     def logout_test(self):
         self.send_cookie = self.get_send_cookie()
         post_header = {
-            "Host": "172.30.0.11",
+            "Host": self.host,
             "Connection": "keep-alive",
-            "Origin": "172.30.0.11",
+            "Origin": self.origin,
             'User-Agent': self.userAgent,
             "Cookie": "JESSIONID="+self.send_cookie
         }
-        page = requests.post("http://172.30.0.11/eportal/InterFace.do?method=logout",
+        page = requests.post(f"{self.test_url}eportal/InterFace.do?method=logout",
                              headers=post_header)
         page.encoding = "UTF-8"
         repack = page.json()
