@@ -603,8 +603,12 @@ class Server(threading.Thread):
                     base64.b64encode(password.encode("utf-8"))
                 self.sock.send(user)
                 # 等待客户端返回该用户是否可用
-                can_use = self.sock.recv(1024).decode('utf-8')
-                if eval(can_use):
+                can_use = self.sock.recv(1024).decode('utf-8').strip()
+                # The client sends the string "True" when the distributed
+                # account can be used and "False" otherwise.  Avoid using
+                # ``eval`` here so that arbitrary data from the client is not
+                # executed as Python code.
+                if can_use.lower() == "true":
                     # 如果可用在控制台打印分配成功
                     # 并将最后分配记录下来
                     print("成功将%s 分配给%s" % (username, self.address))
