@@ -22,24 +22,43 @@ import string
 本项目使用http://www.pushdeer.com/
 作为验证码API，门槛较高，但是相对安全
 """
-with open("server_config.json", "r", encoding="utf-8") as f:
-    config = json.load(f)
+
+CONFIG_PATH = os.getenv("SERVER_CONFIG", "server_config.json")
+try:
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+        config = json.load(f)
+except FileNotFoundError:
+    config = {}
+
+mysql_host = os.getenv("MYSQL_HOST", config.get("mysql_host", "localhost"))
+mysql_port = int(os.getenv("MYSQL_PORT", config.get("mysql_port", 3306)))
+mysql_username = os.getenv("MYSQL_USERNAME", config.get("mysql_username", ""))
+mysql_password = os.getenv("MYSQL_PASSWORD", config.get("mysql_password", ""))
+mysql_database = os.getenv("MYSQL_DATABASE", config.get("mysql_database", ""))
+
 conn = pymysql.connect(
-    host=config['mysql_host'],
-    port=config['mysql_port'],
-    user=config['mysql_username'],
-    password=config['mysql_password'],
-    database=config['mysql_database']
+    host=mysql_host,
+    port=mysql_port,
+    user=mysql_username,
+    password=mysql_password,
+    database=mysql_database
 )
-authorization_code = list(config["authorization_code"].split(","))
+
+authorization_code = os.getenv(
+    "AUTHORIZATION_CODE", config.get("authorization_code", "")
+).split(",")
 teacher_cursor = conn.cursor(pymysql.cursors.DictCursor)
 teacher_cursor.execute('''select * from teacher_info''')
 user_cursor = conn.cursor()
 teacher_change_cursor = conn.cursor()
 security_cursor = conn.cursor()
 security_android_cursor = conn.cursor()
-server_version = config["server_versions"].split("$%^")
-server_android_version = config["server_android_version"].split("$%^")
+server_version = os.getenv(
+    "SERVER_VERSIONS", config.get("server_versions", "")
+).split("$%^")
+server_android_version = os.getenv(
+    "SERVER_ANDROID_VERSION", config.get("server_android_version", "")
+).split("$%^")
 ant_hung = list()
 first_time = time.strftime("%Y-%m-%d-%H:%M:%S秒")
 
@@ -647,8 +666,8 @@ class SqlSave(threading.Thread):
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sql_saver = SqlSave()
 sql_saver.start()
-host = config['host']
-port = config['port']
+host = os.getenv("SERVER_HOST", config.get("host", "0.0.0.0"))
+port = int(os.getenv("SERVER_PORT", config.get("port", 7788)))
 server.bind((host, port))
 server.listen(1)
 while True:
