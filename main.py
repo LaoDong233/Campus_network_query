@@ -3,6 +3,7 @@ import socket
 import sys
 import time
 import json
+import os
 import tkinter.messagebox
 from subprocess import run as command
 from tkinter import *
@@ -115,24 +116,28 @@ def add_firewall():
             fw_rules.Add(fw_rule)
 
 
+CONFIG_PATH = os.getenv("CLIENT_CONFIG", "config.json")
+
+
 def load():
     global save_username, save_password, save_push_deer_id, save_ding_id, save_ding_key, first_open
+    save_username = os.getenv("USERNAME", "")
+    save_password = os.getenv("PASSWORD", "")
+    save_ding_id = os.getenv("DING_ID", "")
+    save_ding_key = os.getenv("DING_KEY", "")
+    first_open = True
     # noinspection PyBroadException
     try:
-        with open(file="config.json", mode='r', encoding='utf-8') as f:
+        with open(file=CONFIG_PATH, mode='r', encoding='utf-8') as f:
             config = json.load(f)
-            save_username = config['username']
-            save_password = config['password']
+            save_username = config.get('username', save_username)
+            save_password = config.get('password', save_password)
             # save_push_deer_id = config['push_deer_id']
-            save_ding_id = config["ding_id"]
-            save_ding_key = config["ding_key"]
-            first_open = config["first_open"]
+            save_ding_id = config.get("ding_id", save_ding_id)
+            save_ding_key = config.get("ding_key", save_ding_key)
+            first_open = config.get("first_open", first_open)
             print(config)
-    except json.decoder.JSONDecodeError:
-        pass
-    except FileNotFoundError:
-        pass
-    except:
+    except (json.decoder.JSONDecodeError, FileNotFoundError):
         pass
 
 
@@ -214,7 +219,7 @@ class My_Gui:
             "ding_key": str(self.ding_key),
             "first_open": first_open
         }
-        with open(file="config.json", mode="w", encoding="utf-8") as f:
+        with open(file=CONFIG_PATH, mode="w", encoding="utf-8") as f:
             f.write(json.dumps(obj=datas, indent=2, ensure_ascii=False, separators=(',', ': ')))
 
     def login(self):
